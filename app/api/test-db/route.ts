@@ -41,8 +41,8 @@ export async function GET(request: NextRequest) {
     // Get user info
     const userInfo = {
       sessionId: session.session_id,
-      userId: session.user_id,
-      email: session.email
+      userId: session.user.id,
+      email: session.user.email
     };
 
     // Get bookmarks count
