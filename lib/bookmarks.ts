@@ -1,6 +1,7 @@
 import { ProcessedArticle } from '@/types/article';
 import { supabase, BookmarkRow, BookmarkInsert, SessionInsert, isSupabaseConfigured } from './supabase';
 import { LocalStorageBookmarks } from '@/types/session';
+import RedisCache, { CacheKeys } from './redis';
 
 const BOOKMARKS_STORAGE_KEY = 'agnext-news-bookmarks';
 
@@ -85,6 +86,13 @@ export async function addBookmarkToSupabase(
       throw error;
     }
 
+    // Update Redis cache
+    const setKey = CacheKeys.bookmarks(sessionId);
+    const dataKey = CacheKeys.bookmarkData(sessionId);
+    await RedisCache.sAdd(setKey, article.id);
+    await RedisCache.del(dataKey); // Invalidate bookmark data cache
+    
+    console.log(`✅ Bookmark added to cache: ${sessionId}/${article.id}`);
     return true;
   } catch (error) {
     console.error('Error adding bookmark to Supabase:', error);
@@ -109,6 +117,14 @@ export async function removeBookmarkFromSupabase(sessionId: string, articleId: s
       .eq('article_id', articleId);
 
     if (error) throw error;
+    
+    // Update Redis cache
+    const setKey = CacheKeys.bookmarks(sessionId);
+    const dataKey = CacheKeys.bookmarkData(sessionId);
+    await RedisCache.sRem(setKey, articleId);
+    await RedisCache.del(dataKey); // Invalidate bookmark data cache
+    
+    console.log(`✅ Bookmark removed from cache: ${sessionId}/${articleId}`);
     return true;
   } catch (error) {
     console.error('Error removing bookmark from Supabase:', error);
@@ -125,6 +141,16 @@ export async function getBookmarksFromSupabase(sessionId: string): Promise<Bookm
   }
 
   try {
+    // Try Redis cache first
+    const cacheKey = CacheKeys.bookmarkData(sessionId);
+    const cachedBookmarks = await RedisCache.get<BookmarkRow[]>(cacheKey);
+    
+    if (cachedBookmarks) {
+      console.log(`🚀 Bookmarks cache HIT: ${sessionId} (${cachedBookmarks.length} bookmarks)`);
+      return cachedBookmarks;
+    }
+
+    // Cache miss - fetch from database
     const { data, error } = await supabase
       .from('bookmarks')
       .select('*')
@@ -132,7 +158,16 @@ export async function getBookmarksFromSupabase(sessionId: string): Promise<Bookm
       .order('created_at', { ascending: false });
 
     if (error) throw error;
-    return data || [];
+    
+    const bookmarks = data || [];
+    
+    // Cache the result
+    if (bookmarks.length > 0) {
+      await RedisCache.set(cacheKey, bookmarks, 1800); // Cache for 30 minutes
+    }
+    
+    console.log(`📖 Bookmarks cache MISS: ${sessionId} (${bookmarks.length} bookmarks), cached for future requests`);
+    return bookmarks;
   } catch (error) {
     console.error('Error fetching bookmarks from Supabase:', error);
     return [];
@@ -146,6 +181,16 @@ export async function isBookmarkedInSupabase(sessionId: string, articleId: strin
   }
 
   try {
+    // Try Redis Set for instant lookup
+    const setKey = CacheKeys.bookmarks(sessionId);
+    const isInSet = await RedisCache.sIsMember(setKey, articleId);
+    
+    if (isInSet !== null) {
+      console.log(`🚀 Bookmark status cache HIT: ${sessionId}/${articleId} = ${isInSet}`);
+      return isInSet;
+    }
+
+    // Cache miss - check database and populate cache
     const { data, error } = await supabase
       .from('bookmarks')
       .select('id')
@@ -154,7 +199,16 @@ export async function isBookmarkedInSupabase(sessionId: string, articleId: strin
       .limit(1);
 
     if (error) throw error;
-    return (data?.length || 0) > 0;
+    
+    const isBookmarked = (data?.length || 0) > 0;
+    
+    // Update the Redis set
+    if (isBookmarked) {
+      await RedisCache.sAdd(setKey, articleId);
+    }
+    
+    console.log(`📖 Bookmark status cache MISS: ${sessionId}/${articleId} = ${isBookmarked}`);
+    return isBookmarked;
   } catch (error) {
     console.error('Error checking bookmark status:', error);
     // Fallback to localStorage

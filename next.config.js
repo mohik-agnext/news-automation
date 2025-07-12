@@ -1,6 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  serverExternalPackages: [],
+  experimental: {
+    serverComponentsExternalPackages: ['redis']
+  },
   async headers() {
     return [
       {
