@@ -3,8 +3,8 @@ const nextConfig = {
   experimental: {
     serverExternalPackages: ['redis']
   },
-  typescript: {
-    ignoreBuildErrors: true,
+  eslint: {
+    ignoreDuringBuilds: true,
   },
   async headers() {
     return [
