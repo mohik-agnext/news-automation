@@ -10,7 +10,7 @@ interface User {
 
 interface SearchHeaderProps {
   onNewArticles?: () => void;
-  onSearchComplete?: () => void;
+  onSearchComplete?: (query: string) => void;
   onShowBookmarks?: () => void;
   user?: User | null;
   onLogout?: () => void;
@@ -53,7 +53,7 @@ export default function SearchHeader({
         
         // Notify parent component that search is complete
         if (onSearchComplete) {
-          onSearchComplete();
+          onSearchComplete(keywords.join(' '));
         }
         
         // Auto-clear status after 3 seconds
@@ -85,7 +85,7 @@ export default function SearchHeader({
         
         // Notify parent component
         if (onSearchComplete) {
-          onSearchComplete();
+          onSearchComplete('');
         }
         
         // Auto-clear status after 2 seconds
@@ -131,7 +131,7 @@ export default function SearchHeader({
                 </div>
                 <div>
                   <h1 className="text-2xl lg:text-3xl font-bold bg-gradient-to-r from-gray-900 via-blue-800 to-purple-800 bg-clip-text text-transparent">
-                    AgNext News Intelligence
+                    News Intelligence
                   </h1>
                   <p className="text-sm text-gray-600 font-medium">AI-Powered Agriculture News Discovery</p>
                 </div>
@@ -193,7 +193,7 @@ export default function SearchHeader({
                 Discover Agriculture Intelligence
               </h2>
               <p className="text-lg text-gray-600 max-w-3xl mx-auto leading-relaxed">
-                Search for cutting-edge insights on food quality, agriculture technology, and AgNext services with AI-powered intelligence.
+                Search for cutting-edge insights on food quality, agriculture technology, and news services with AI-powered intelligence.
               </p>
             </div>
             
