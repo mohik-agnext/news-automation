@@ -268,23 +268,6 @@ class ArticlesStore {
       console.error('Error warming up cache:', error);
     }
   }
-
-  // Backward compatibility methods (synchronous versions)
-  public getArticles(): Article[] {
-    return this.getArticlesSync();
-  }
-
-  public setArticles(articles: Article[]): void {
-    this.setArticlesSync(articles);
-  }
-
-  public getCount(): number {
-    return this.getCountSync();
-  }
-
-  public clear(): void {
-    this.clearSync();
-  }
 }
 
 // Export singleton instance
