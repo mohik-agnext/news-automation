@@ -10,7 +10,7 @@ interface User {
 
 interface SearchHeaderProps {
   onNewArticles?: () => void;
-  onSearchComplete?: () => void;
+  onSearchComplete?: (query: string) => void;
   onShowBookmarks?: () => void;
   user?: User | null;
   onLogout?: () => void;
@@ -53,7 +53,7 @@ export default function SearchHeader({
         
         // Notify parent component that search is complete
         if (onSearchComplete) {
-          onSearchComplete();
+          onSearchComplete(keywords.join(' '));
         }
         
         // Auto-clear status after 3 seconds
@@ -85,7 +85,7 @@ export default function SearchHeader({
         
         // Notify parent component
         if (onSearchComplete) {
-          onSearchComplete();
+          onSearchComplete('');
         }
         
         // Auto-clear status after 2 seconds
