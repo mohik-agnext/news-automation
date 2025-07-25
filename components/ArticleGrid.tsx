@@ -10,7 +10,7 @@ import LoadingGrid from './LoadingGrid';
 import SearchHeader from './SearchHeader';
 import SortDropdown from './SortDropdown';
 import { ProcessedArticle } from '@/types/article';
-import { SortOption } from '@/lib/sorting';
+import type { SortOption } from '@/types/article';
 
 interface ArticleGridState {
   articles: ProcessedArticle[];
@@ -398,7 +398,7 @@ export default function ArticleGrid({ user, onLogout }: ArticleGridProps) {
             </svg>
           </div>
           <h2 className="text-xl font-semibold text-slate-900 mb-2">Authentication Required</h2>
-          <p className="text-slate-600">Please log in to access AgNext News Intelligence.</p>
+                        <p className="text-slate-600">Please log in to access News Intelligence.</p>
         </div>
       </div>
     );
@@ -469,9 +469,9 @@ export default function ArticleGrid({ user, onLogout }: ArticleGridProps) {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
               </div>
-              <h2 className="text-2xl font-bold text-slate-900 mb-4">Welcome to AgNext News Intelligence</h2>
+              <h2 className="text-2xl font-bold text-slate-900 mb-4">Welcome to News Intelligence</h2>
               <p className="text-slate-600 leading-relaxed">
-                Search for agriculture technology, food quality, and AgNext-related news with our AI-powered system. Enter keywords above to get started.
+                Search for agriculture technology, food quality, and news with our AI-powered system. Enter keywords above to get started.
               </p>
             </div>
           </div>
