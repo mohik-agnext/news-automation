@@ -8,13 +8,14 @@ export async function GET(request: NextRequest) {
   try {
     const session = await getCurrentSession(request);
     
-    if (!session) {
+    if (!session || typeof (session as any).session_id !== 'string') {
       return NextResponse.json({
         success: false,
-        error: 'Authentication required'
+        error: 'Session object missing session_id'
       }, { status: 401 });
     }
-
+    const session_id = (session as { session_id: string }).session_id;
+    
     // Gather performance metrics
     const redisMetrics = RedisCache.getMetrics();
     const sessionMetrics = getSessionPerformanceStats();
@@ -49,7 +50,7 @@ export async function GET(request: NextRequest) {
     const performanceData = {
       success: true,
       timestamp: new Date().toISOString(),
-      session_id: session.session_id,
+      session_id: session_id,
       
       // Overall metrics
       overall: {
