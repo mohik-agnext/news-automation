@@ -251,7 +251,7 @@ export class RedisCache {
     try {
       const result = await client.sIsMember(key, member);
       console.log(`🔍 Set CHECK: ${key} -> ${member} = ${result}`);
-      return result;
+      return result > 0;
     } catch (error) {
       console.error(`❌ Redis SISMEMBER error for key ${key}:`, error);
       return false;
