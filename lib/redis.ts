@@ -44,8 +44,7 @@ async function initializeRedis(): Promise<RedisClientType | null> {
     redisClient = createClient({
       url: REDIS_CONFIG.url,
       socket: {
-        connectTimeout: REDIS_CONFIG.connect_timeout,
-        lazyConnect: REDIS_CONFIG.lazyConnect
+        connectTimeout: REDIS_CONFIG.connect_timeout
       }
     });
 
