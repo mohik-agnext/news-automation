@@ -6,6 +6,14 @@ export async function GET(request: NextRequest) {
   try {
     const session = await getCurrentSession(request);
     
+    if (!session || typeof (session as any).session_id !== 'string') {
+      return NextResponse.json({
+        success: false,
+        error: 'Session object missing session_id'
+      }, { status: 401 });
+    }
+    const session_id = (session as { session_id: string }).session_id;
+    
     if (!session) {
       return NextResponse.json({
         success: false,
@@ -17,13 +25,13 @@ export async function GET(request: NextRequest) {
     const articleId = searchParams.get('articleId');
     
     console.log(`🔍 LinkedIn API GET Request`);
-    console.log(`Session ID: ${session.session_id}`);
+    console.log(`Session ID: ${session_id}`);
     console.log(`Article ID: ${articleId}`);
 
     let query = supabase
       .from('linkedin_content')
       .select('*')
-      .eq('session_id', session.session_id)
+      .eq('session_id', session_id)
       .order('created_at', { ascending: false });
 
     if (articleId) {
@@ -63,7 +71,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       success: true,
       content: mappedContent,
-      sessionId: session.session_id
+      sessionId: session_id
     });
 
   } catch (error) {
@@ -78,6 +86,14 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const session = await getCurrentSession(request);
+    
+    if (!session || typeof (session as any).session_id !== 'string') {
+      return NextResponse.json({
+        success: false,
+        error: 'Session object missing session_id'
+      }, { status: 401 });
+    }
+    const session_id = (session as { session_id: string }).session_id;
     
     if (!session) {
       return NextResponse.json({
@@ -113,7 +129,7 @@ export async function POST(request: NextRequest) {
     const { data: existingContent } = await supabase
       .from('linkedin_content')
       .select('id')
-      .eq('session_id', session.session_id)
+      .eq('session_id', session_id)
       .eq('article_id', article_id)
       .single();
 
@@ -143,7 +159,7 @@ export async function POST(request: NextRequest) {
           const { data: existingData } = await supabase
             .from('linkedin_content')
             .select('*')
-            .eq('session_id', session.session_id)
+            .eq('session_id', session_id)
             .eq('article_id', article_id)
             .single();
           
@@ -168,7 +184,7 @@ export async function POST(request: NextRequest) {
             success: true,
             content: mappedExistingData,
             message: 'Content already exists',
-            sessionId: session.session_id
+            sessionId: session_id
           });
         }
         throw updateError;
@@ -196,7 +212,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({
         success: true,
         content: mappedUpdatedContent,
-        sessionId: session.session_id
+        sessionId: session_id
       });
     } else {
       console.log('➕ Creating new LinkedIn content for article:', article_id);
@@ -204,7 +220,7 @@ export async function POST(request: NextRequest) {
       const { data: newContent, error: insertError } = await supabase
         .from('linkedin_content')
         .insert({
-          session_id: session.session_id,
+          session_id: session_id,
           article_id,
           original_title: article_title,
           original_url: article_url || '',
@@ -224,7 +240,7 @@ export async function POST(request: NextRequest) {
           const { data: existingData } = await supabase
             .from('linkedin_content')
             .select('*')
-            .eq('session_id', session.session_id)
+            .eq('session_id', session_id)
             .eq('article_id', article_id)
             .single();
           
@@ -249,7 +265,7 @@ export async function POST(request: NextRequest) {
             success: true,
             content: mappedExistingData,
             message: 'Content already exists',
-            sessionId: session.session_id
+            sessionId: session_id
           });
         }
         throw insertError;
@@ -277,7 +293,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({
         success: true,
         content: mappedNewContent,
-        sessionId: session.session_id
+        sessionId: session_id
       });
     }
 
