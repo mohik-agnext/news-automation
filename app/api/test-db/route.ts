@@ -37,13 +37,15 @@ export async function GET(request: NextRequest) {
         connectionTest
       }, { status: 401 });
     }
-    const session_id = (session as { session_id: string }).session_id;
+    type SessionType = { session_id: string; user: { id: string; email: string } };
+    const sessionTyped = session as SessionType;
+    const session_id = sessionTyped.session_id;
 
     // Get user info
     const userInfo = {
       sessionId: session_id,
-      userId: session.user.id,
-      email: session.user.email
+      userId: sessionTyped.user.id,
+      email: sessionTyped.user.email
     };
 
     // Get bookmarks count
