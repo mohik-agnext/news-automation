@@ -384,7 +384,7 @@ export default function ArticleGrid({ user, onLogout }: ArticleGridProps) {
 
   // Now we can do conditional rendering after all hooks are called
   if (sessionLoading) {
-    return <LoadingGrid message="Loading session..." />;
+    return <LoadingGrid />;
   }
 
   // Show authentication required if not authenticated
