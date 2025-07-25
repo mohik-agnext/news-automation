@@ -10,12 +10,14 @@ export async function GET(request: NextRequest) {
         error: 'Session object missing session_id'
       }, { status: 401 });
     }
-    const session_id = (session as { session_id: string }).session_id;
+    type SessionType = { session_id: string; isAuthenticated: boolean; user: any };
+    const sessionTyped = session as SessionType;
+    const session_id = sessionTyped.session_id;
     
     return NextResponse.json({
-      sessionId: session_id,
-      authenticated: session.isAuthenticated,
-      user: session.user
+      sessionId: sessionTyped.session_id,
+      authenticated: sessionTyped.isAuthenticated,
+      user: sessionTyped.user
     });
     
   } catch (error) {
