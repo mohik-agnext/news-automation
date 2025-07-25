@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Get current articles from shared store
-    const rawArticles = articlesStore.getArticles();
+    const rawArticles = await articlesStore.getArticles();
     
     console.log(`📖 Articles API called - Found ${rawArticles.length} articles in shared store`);
     
