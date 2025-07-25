@@ -187,7 +187,7 @@ export async function POST(request: NextRequest) {
           // No LinkedIn content exists, trigger webhook
           console.log(`🔗 Triggering LinkedIn webhook for existing bookmark: ${articleTitle}`);
           
-          const webhookUrl = process.env.LINKEDIN_WEBHOOK_URL || 'http://127.0.0.1:5678/webhook/linkedin';
+          const webhookUrl = process.env.LINKEDIN_WEBHOOK_URL || 'https://mohik-server.app.n8n.cloud/webhook/linkedin';
           
           const webhookPayload = {
             session_id: session_id,

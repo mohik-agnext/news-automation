@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
     console.log(`📝 Display text: "${displayText}"`);
     
     // Use Google SERP search endpoint for high-quality semantic search
-    const n8nWebhookUrl = 'http://127.0.0.1:5678/webhook/serp';
+    const n8nWebhookUrl = 'https://mohik-server.app.n8n.cloud/webhook/serp';
     console.log(`🔍 Triggering SERP search webhook: ${n8nWebhookUrl}`);
     
     // Prepare payload for SERP search (your workflow expects 'chatInput')

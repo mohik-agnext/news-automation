@@ -92,7 +92,7 @@ export default function HomePage() {
             <div className="w-16 h-16 border-4 border-slate-200 rounded-full animate-spin"></div>
             <div className="absolute top-0 left-0 w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
           </div>
-          <p className="text-slate-600 mt-6 font-medium">Loading AgNext News Intelligence...</p>
+          <p className="text-slate-600 mt-6 font-medium">Loading News Intelligence...</p>
         </div>
       </div>
     );
@@ -123,7 +123,7 @@ export default function HomePage() {
                 </div>
               </div>
               <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 via-blue-800 to-purple-800 bg-clip-text text-transparent mb-2">
-                AgNext News Intelligence
+                News Intelligence
               </h1>
               <p className="text-gray-600 font-medium">AI-Powered Agriculture News Discovery</p>
             </div>
@@ -146,7 +146,7 @@ export default function HomePage() {
             <div className="mt-6 p-4 bg-blue-50/80 backdrop-blur-sm rounded-xl border border-blue-200/50">
               <p className="text-sm text-blue-800 font-medium text-center mb-2">Demo Credentials</p>
               <div className="text-xs text-blue-700 text-center space-y-1">
-                <div><strong>Email:</strong> demo@agnext.com</div>
+                <div><strong>Email:</strong> demo@newsintelligence.com</div>
                 <div><strong>Password:</strong> demo123</div>
               </div>
             </div>

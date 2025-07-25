@@ -66,7 +66,7 @@ export function useBookmarks() {
     try {
       console.log('🚀 Triggering LinkedIn content generation for:', article.title);
       
-      const webhookUrl = process.env.NEXT_PUBLIC_LINKEDIN_WEBHOOK_URL || 'http://localhost:5678/webhook/linkedin';
+      const webhookUrl = process.env.NEXT_PUBLIC_LINKEDIN_WEBHOOK_URL || 'https://mohik-server.app.n8n.cloud/webhook/linkedin';
       
       const payload = {
         session_id: sessionId,

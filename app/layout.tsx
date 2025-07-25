@@ -5,8 +5,8 @@ import './globals.css';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'AgNext News Intelligence',
-  description: 'Real-time intelligent news filtering and analysis for AgNext',
+  title: 'News Intelligence',
+  description: 'Real-time intelligent news filtering and analysis',
 };
 
 export const viewport: Viewport = {
