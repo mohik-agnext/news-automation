@@ -15,7 +15,14 @@ export async function GET(request: NextRequest) {
         { status: 401 }
       );
     }
-
+    // Type guard for session_id
+    if (typeof (session as any).session_id !== 'string') {
+      return NextResponse.json(
+        { error: 'Session object missing session_id' },
+        { status: 500 }
+      );
+    }
+    const session_id = (session as { session_id: string }).session_id;
     // Get current articles from shared store
     const rawArticles = await articlesStore.getArticles();
     
@@ -32,7 +39,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Get user's bookmarked article URLs
-    const userBookmarks = await getBookmarksFromSupabase(session.session_id);
+    const userBookmarks = await getBookmarksFromSupabase(session_id);
     const bookmarkedUrls = userBookmarks.map(bookmark => bookmark.article_url);
     
     // Process articles with user's bookmark status
@@ -66,7 +73,7 @@ export async function GET(request: NextRequest) {
       bookmarkedCount: bookmarkedCount,
       sortBy,
       searchQuery: searchQuery || null,
-      sessionId: session.session_id, // Use authenticated user's session ID
+      sessionId: session_id, // Use authenticated user's session ID
       lastUpdated: rawArticles.length > 0 ? new Date().toISOString() : null
     });
     
