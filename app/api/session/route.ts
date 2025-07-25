@@ -5,14 +5,15 @@ export async function GET(request: NextRequest) {
   try {
     const session = await getCurrentSession(request);
     
-    if (!session) {
+    if (!session || typeof (session as any).session_id !== 'string') {
       return NextResponse.json({
-        error: 'Authentication required'
+        error: 'Session object missing session_id'
       }, { status: 401 });
     }
-
+    const session_id = (session as { session_id: string }).session_id;
+    
     return NextResponse.json({
-      sessionId: session.session_id,
+      sessionId: session_id,
       authenticated: session.isAuthenticated,
       user: session.user
     });
