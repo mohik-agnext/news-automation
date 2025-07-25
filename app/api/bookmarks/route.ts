@@ -29,10 +29,17 @@ export async function GET(request: NextRequest) {
         error: 'Authentication required'
       }, { status: 401 });
     }
-
-    console.log(`📖 Fetching bookmarks for session: ${session.session_id}`);
+    // Type guard for session_id
+    if (typeof (session as any).session_id !== 'string') {
+      return NextResponse.json({
+        success: false,
+        error: 'Session object missing session_id'
+      }, { status: 401 });
+    }
+    const session_id = (session as { session_id: string }).session_id;
+    console.log(`📖 Fetching bookmarks for session: ${session_id}`);
     
-    const bookmarks = await getBookmarksFromSupabase(session.session_id);
+    const bookmarks = await getBookmarksFromSupabase(session_id);
     
     // Fix any bookmarks missing publication dates
     const bookmarksNeedingDateFix = bookmarks.filter(bookmark => !bookmark.article_published_at);
@@ -106,14 +113,14 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const session = await getCurrentSession(request);
-    
-    if (!session) {
+    if (!session || typeof (session as any).session_id !== 'string') {
       return NextResponse.json({
         success: false,
-        error: 'Authentication required'
+        error: 'Session object missing session_id'
       }, { status: 401 });
     }
-
+    const session_id = (session as { session_id: string }).session_id;
+    
     const body = await request.json();
     const { articleId, articleUrl, articleTitle, articleSource, summary, relevanceScore, publishedAt } = body;
     
@@ -125,7 +132,7 @@ export async function POST(request: NextRequest) {
     }
 
     console.log(`➕ Adding bookmark: {
-  session: '${session.session_id}',
+  session: '${session_id}',
   articleId: '${articleId}',
   title: '${articleTitle}'
 }`);
@@ -160,7 +167,7 @@ export async function POST(request: NextRequest) {
       }
     };
 
-    const result = await addBookmarkToSupabase(session.session_id, article, clientIP);
+    const result = await addBookmarkToSupabase(session_id, article, clientIP);
     
     // Check if bookmark already exists (result false means duplicate)
     if (result === false) {
@@ -172,7 +179,7 @@ export async function POST(request: NextRequest) {
         const { data: existingContent } = await supabase
           .from('linkedin_content')
           .select('id')
-          .eq('session_id', session.session_id)
+          .eq('session_id', session_id)
           .eq('article_id', articleId)
           .single();
 
@@ -183,7 +190,7 @@ export async function POST(request: NextRequest) {
           const webhookUrl = process.env.LINKEDIN_WEBHOOK_URL || 'http://127.0.0.1:5678/webhook/linkedin';
           
           const webhookPayload = {
-            session_id: session.session_id,
+            session_id: session_id,
             article: {
               id: articleId,
               url: articleUrl,
@@ -215,15 +222,15 @@ export async function POST(request: NextRequest) {
         console.error('❌ Error checking/triggering LinkedIn content:', linkedinError);
       }
       
-      const bookmarkId = `${session.session_id}-${articleId}`;
+      const bookmarkId = `${session_id}-${articleId}`;
       return NextResponse.json({
         success: true,
         bookmarkId,
-        sessionId: session.session_id,
+        sessionId: session_id,
         message: 'Article already bookmarked'
       });
     } else if (result === true) {
-      const bookmarkId = `${session.session_id}-${articleId}`;
+      const bookmarkId = `${session_id}-${articleId}`;
       console.log(`✅ Successfully created bookmark: ${bookmarkId}`);
       
       // Trigger LinkedIn webhook for article processing
@@ -233,7 +240,7 @@ export async function POST(request: NextRequest) {
         const webhookUrl = process.env.LINKEDIN_WEBHOOK_URL || 'http://127.0.0.1:5678/webhook/linkedin';
         
         const webhookPayload = {
-          session_id: session.session_id,
+          session_id: session_id,
           article: {
             id: articleId,
             url: articleUrl,
@@ -265,7 +272,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({
         success: true,
         bookmarkId,
-        sessionId: session.session_id
+        sessionId: session_id
       });
     } else {
       throw new Error('Failed to create bookmark');
@@ -283,14 +290,14 @@ export async function POST(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     const session = await getCurrentSession(request);
-    
-    if (!session) {
+    if (!session || typeof (session as any).session_id !== 'string') {
       return NextResponse.json({
         success: false,
-        error: 'Authentication required'
+        error: 'Session object missing session_id'
       }, { status: 401 });
     }
-
+    const session_id = (session as { session_id: string }).session_id;
+    
     const body = await request.json();
     const { articleId, clearAll } = body;
     
@@ -309,9 +316,9 @@ export async function DELETE(request: NextRequest) {
       }, { status: 400 });
     }
 
-    console.log(`➖ Removing bookmark: session=${session.session_id}, articleId=${articleId}`);
+    console.log(`➖ Removing bookmark: session=${session_id}, articleId=${articleId}`);
     
-    const result = await removeBookmarkFromSupabase(session.session_id, articleId);
+    const result = await removeBookmarkFromSupabase(session_id, articleId);
     
     if (result) {
       console.log(`✅ Successfully removed bookmark: ${articleId}`);
