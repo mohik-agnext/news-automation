@@ -30,17 +30,18 @@ export async function GET(request: NextRequest) {
     // Test Supabase connection
     const connectionTest = await testSupabaseConnection();
     
-    if (!session) {
+    if (!session || typeof (session as any).session_id !== 'string') {
       return NextResponse.json({
         success: false,
-        error: 'No session found',
+        error: 'Session object missing session_id',
         connectionTest
       }, { status: 401 });
     }
+    const session_id = (session as { session_id: string }).session_id;
 
     // Get user info
     const userInfo = {
-      sessionId: session.session_id,
+      sessionId: session_id,
       userId: session.user.id,
       email: session.user.email
     };
@@ -49,7 +50,7 @@ export async function GET(request: NextRequest) {
     const { data: bookmarks, error: bookmarksError } = await supabase
       .from('bookmarks')
       .select('*')
-      .eq('session_id', session.session_id);
+      .eq('session_id', session_id);
 
     const bookmarksInfo = {
       count: bookmarks?.length || 0,
