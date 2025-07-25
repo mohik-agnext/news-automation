@@ -97,36 +97,4 @@ export async function clearSessionCache(sessionId: string): Promise<void> {
   } catch (error) {
     console.error('Error clearing session cache:', error);
   }
-}
-
-export function addBookmarkToSession(sessionId: string, articleId: string): boolean {
-  const session = getSession(sessionId);
-  if (!session) return false;
-  
-  if (!session.bookmarks.includes(articleId)) {
-    session.bookmarks.push(articleId);
-    sessionStore.set(sessionId, session);
-    return true;
-  }
-  
-  return false;
-}
-
-export function removeBookmarkFromSession(sessionId: string, articleId: string): boolean {
-  const session = getSession(sessionId);
-  if (!session) return false;
-  
-  const index = session.bookmarks.indexOf(articleId);
-  if (index > -1) {
-    session.bookmarks.splice(index, 1);
-    sessionStore.set(sessionId, session);
-    return true;
-  }
-  
-  return false;
-}
-
-export function isArticleBookmarked(sessionId: string, articleId: string): boolean {
-  const session = getSession(sessionId);
-  return session ? session.bookmarks.includes(articleId) : false;
 } 
