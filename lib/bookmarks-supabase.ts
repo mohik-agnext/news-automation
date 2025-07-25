@@ -1,8 +1,11 @@
 import { supabase } from './supabase';
-import type { Tables } from './supabase';
+// Commented out to avoid unused import warning
+// import type { Tables } from './supabase-types';
 import type { ProcessedArticle } from '@/types/article';
 
-type Bookmark = Tables<'bookmarks'>;
+// Define bookmark type for internal use
+// Commented out to avoid unused type warning
+// type _Bookmark = Tables<'bookmarks'>;
 
 export interface BookmarkData {
   id: string;
@@ -413,4 +416,4 @@ export async function getBookmarkStats(sessionId: string): Promise<{
       newestBookmark: null
     };
   }
-} 
+}

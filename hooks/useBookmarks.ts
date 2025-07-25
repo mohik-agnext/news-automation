@@ -1,5 +1,6 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useContext } from 'react';
 import { ProcessedArticle } from '@/types/article';
+import { useLinkedInContent } from './useLinkedInContent';
 
 interface BookmarkData {
   id: string;
@@ -25,11 +26,12 @@ interface OptimisticOperation {
 
 export function useBookmarks() {
   const [bookmarks, setBookmarks] = useState<Set<string>>(new Set());
-  const [bookmarkData, setBookmarkData] = useState<BookmarkData[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [bookmarkData, setBookmarkData] = useState<Map<string, BookmarkData>>(new Map());
+  const [loading, setLoading] = useState(true);
   const [syncLoading, setSyncLoading] = useState(false);
   const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
   const [optimisticOperations, setOptimisticOperations] = useState<OptimisticOperation[]>([]);
+  const { deleteLinkedInContent, clearLinkedInContent } = useLinkedInContent();
 
   // Load bookmarks from localStorage on mount
   useEffect(() => {
@@ -42,12 +44,12 @@ export function useBookmarks() {
         console.error('Error parsing saved bookmarks:', error);
       }
     }
-  }, []);
+  }, [clearLinkedInContent]);
 
   // Save bookmarks to localStorage whenever they change
   useEffect(() => {
     localStorage.setItem('agnext_bookmarks', JSON.stringify(Array.from(bookmarks)));
-  }, [bookmarks]);
+  }, [bookmarks, clearLinkedInContent]);
 
   // Clean up old optimistic operations (older than 10 seconds)
   useEffect(() => {
@@ -59,7 +61,7 @@ export function useBookmarks() {
     }, 5000);
 
     return () => clearInterval(cleanup);
-  }, []);
+  }, [clearLinkedInContent]);
 
   // Function to trigger LinkedIn content generation
   const triggerLinkedInGeneration = async (article: ProcessedArticle, sessionId: string) => {
@@ -143,6 +145,14 @@ export function useBookmarks() {
         }
 
         console.log('✅ Server confirmed bookmark removal:', article.title);
+        
+        // Also delete any associated LinkedIn content
+        try {
+          await deleteLinkedInContent(articleId);
+        } catch (linkedInError) {
+          // Don't fail the bookmark removal if LinkedIn content deletion fails
+          console.warn('⚠️ Failed to delete LinkedIn content, but bookmark was removed:', linkedInError);
+        }
       } else {
         // Add bookmark
         const response = await fetch('/api/bookmarks', {
@@ -205,15 +215,15 @@ export function useBookmarks() {
       // TODO: Show user notification about the error
       console.error('Bookmark operation failed:', error instanceof Error ? error.message : 'Unknown error');
     }
-  }, [bookmarks]);
+  }, [bookmarks, clearLinkedInContent]);
 
   const isBookmarked = useCallback((articleId: string) => {
     return bookmarks.has(articleId);
-  }, [bookmarks]);
+  }, [bookmarks, clearLinkedInContent]);
 
   const getBookmarkCount = useCallback(() => {
     return bookmarks.size;
-  }, [bookmarks]);
+  }, [bookmarks, clearLinkedInContent]);
 
   const syncBookmarks = useCallback(async () => {
     try {
@@ -250,7 +260,7 @@ export function useBookmarks() {
     } finally {
       setSyncLoading(false);
     }
-  }, [bookmarks]);
+  }, [bookmarks, clearLinkedInContent]);
 
   const refreshBookmarks = useCallback(async () => {
     try {
@@ -274,7 +284,7 @@ export function useBookmarks() {
     } catch (error) {
       console.error('❌ Error refreshing bookmarks:', error);
     }
-  }, []);
+  }, [clearLinkedInContent]);
 
   const clearAllBookmarks = useCallback(async () => {
     try {
@@ -300,14 +310,23 @@ export function useBookmarks() {
         throw new Error('Failed to clear bookmarks');
       }
 
-      setBookmarkData([]);
+      setBookmarkData(new Map());
       console.log('✅ All bookmarks cleared');
+      
+      // Also clear all LinkedIn content
+      try {
+        clearLinkedInContent();
+        console.log('✅ LinkedIn content cleared');
+      } catch (linkedInError) {
+        // Don't fail the bookmark clearing if LinkedIn content clearing fails
+        console.warn('⚠️ Failed to clear LinkedIn content, but bookmarks were cleared:', linkedInError);
+      }
     } catch (error) {
       console.error('❌ Error clearing bookmarks:', error);
     } finally {
       setLoading(false);
     }
-  }, [bookmarks]);
+  }, [bookmarks, clearLinkedInContent]);
 
   return {
     toggleBookmark,
@@ -323,4 +342,4 @@ export function useBookmarks() {
     lastSyncTime,
     optimisticOperations: optimisticOperations.length
   };
-} 
+}

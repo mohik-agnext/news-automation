@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
 
     // Get user's bookmarked article URLs
     const userBookmarks = await getBookmarksFromSupabase(session_id);
-    const bookmarkedUrls = userBookmarks.map(bookmark => bookmark.article_url);
+    const bookmarkedUrls = userBookmarks.map((bookmark: { article_url: string }) => bookmark.article_url);
     
     // Process articles with user's bookmark status
     const processedArticles = processArticles(rawArticles, bookmarkedUrls);

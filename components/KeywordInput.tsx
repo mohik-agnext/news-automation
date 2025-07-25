@@ -88,7 +88,7 @@ export default function KeywordInput({
   };
 
   // Handle input blur
-  const handleInputBlur = (e: React.FocusEvent) => {
+  const handleInputBlur = () => {
     // Don't close suggestions immediately - let click handlers work first
     setTimeout(() => {
       console.log('👁️ Input blurred, hiding suggestions');
@@ -408,9 +408,9 @@ export default function KeywordInput({
 
       {/* Helpful hints */}
       <div className="mt-4 text-sm text-gray-500 space-y-1">
-        <p>💡 <strong>Tips:</strong> Use keywords like "food safety", "agriculture technology", or "crop monitoring"</p>
+        <p>💡 <strong>Tips:</strong> Use keywords like &quot;food safety&quot;, &quot;agriculture technology&quot;, or &quot;crop monitoring&quot;</p>
         <p>⌨️ <strong>Quick input:</strong> Type and press Enter to add keywords, then Search to find articles</p>
       </div>
     </div>
   );
-} 
+}

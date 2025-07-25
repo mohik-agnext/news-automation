@@ -37,7 +37,7 @@ export function sortArticles(articles: ProcessedArticle[], sortBy: SortOption['v
 }
 
 export function processArticles(articles: Article[], bookmarkedUrls: string[]): ProcessedArticle[] {
-  return articles.map((article, index) => ({
+  return articles.map((article) => ({
     ...article,
     id: `${article.source}-${article.articleIndex}-${Date.now()}`,
     displayScore: calculateDisplayScore(article.relevanceScore, article.qualityScore),
@@ -58,4 +58,4 @@ export function filterArticles(articles: ProcessedArticle[], searchQuery?: strin
     article.source.toLowerCase().includes(query) ||
     article.author.toLowerCase().includes(query)
   );
-} 
+}

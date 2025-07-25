@@ -1,5 +1,5 @@
 import { ProcessedArticle } from '@/types/article';
-import { supabase, BookmarkRow, BookmarkInsert, SessionInsert, isSupabaseConfigured } from './supabase';
+import { supabase, BookmarkRow, BookmarkInsert, isSupabaseConfigured } from './supabase';
 import { LocalStorageBookmarks } from '@/types/session';
 import RedisCache, { CacheKeys } from './redis';
 
@@ -269,7 +269,7 @@ export async function enrichBookmark(
     summary?: string;
     tags?: string[];
     relevanceScore?: number;
-    enrichedData?: any;
+    enrichedData?: Record<string, unknown>;
   }
 ): Promise<void> {
   console.log('🔧 enrichBookmark called with:', { sessionId, articleId, enrichmentData });
@@ -360,4 +360,4 @@ export function exportBookmarks(): LocalStorageBookmarks {
 
 export function importBookmarks(bookmarks: LocalStorageBookmarks): void {
   setLocalStorageBookmarks(bookmarks);
-} 
+}

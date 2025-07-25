@@ -16,7 +16,7 @@ async function ensureBookmarksDir() {
   try {
     await fs.mkdir(DATA_DIR, { recursive: true });
     await fs.mkdir(BOOKMARKS_DIR, { recursive: true });
-  } catch (error) {
+  } catch {
     // Directory already exists, ignore
   }
 }
@@ -40,7 +40,7 @@ async function loadUserBookmarks(userId: string): Promise<UserBookmark[]> {
     const filePath = getUserBookmarksFile(userId);
     const data = await fs.readFile(filePath, 'utf-8');
     return JSON.parse(data);
-  } catch (error) {
+  } catch {
     return [];
   }
 }
@@ -183,4 +183,4 @@ export async function getUserBookmarkedArticles(userId: string): Promise<{ succe
     console.error('Error getting user bookmarked articles:', error);
     return { success: false, articles: [], error: 'Failed to get bookmarked articles' };
   }
-} 
+}

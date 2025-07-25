@@ -25,7 +25,7 @@ function isControllerWritable(controller: ReadableStreamDefaultController): bool
     }
     
     return true;
-  } catch (error) {
+  } catch {
     return false;
   }
 }
@@ -46,7 +46,7 @@ function sendSSEMessage(controller: ReadableStreamDefaultController, update: Rea
     if (connectionData) {
       connectionData.lastActivity = Date.now();
     }
-  } catch (error) {
+  } catch {
     // Silently remove the connection without logging (normal behavior when clients disconnect)
     removeSSEConnection(controller);
   }
@@ -90,7 +90,7 @@ export function addSSEConnection(controller: ReadableStreamDefaultController) {
     try {
       controller.enqueue(new TextEncoder().encode(': keep-alive\n\n'));
       connectionData.lastActivity = Date.now();
-    } catch (error) {
+    } catch {
       removeSSEConnection(controller);
     }
   }, 30000);
@@ -128,7 +128,7 @@ export function createSSEStream() {
       // Send initial connection message
       try {
         controller.enqueue(new TextEncoder().encode('data: {"type":"connected"}\n\n'));
-      } catch (error) {
+      } catch {
         removeSSEConnection(controller);
       }
     },
@@ -171,4 +171,4 @@ export function getActiveConnectionsCount(): number {
     }
   });
   return activeCount;
-} 
+}

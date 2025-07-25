@@ -318,6 +318,36 @@ export async function DELETE(request: NextRequest) {
 
     console.log(`➖ Removing bookmark: session=${session_id}, articleId=${articleId}`);
     
+    // First, check if there's LinkedIn content for this bookmark
+    try {
+      const { data: linkedInContent } = await supabase
+        .from('linkedin_content')
+        .select('id')
+        .eq('session_id', session_id)
+        .eq('article_id', articleId)
+        .single();
+      
+      if (linkedInContent) {
+        console.log(`🔗 Removing associated LinkedIn content for: ${articleId}`);
+        // Delete the LinkedIn content first
+        const { error: linkedInDeleteError } = await supabase
+          .from('linkedin_content')
+          .delete()
+          .eq('session_id', session_id)
+          .eq('article_id', articleId);
+        
+        if (linkedInDeleteError) {
+          console.warn(`⚠️ Failed to remove LinkedIn content: ${linkedInDeleteError.message}`);
+        } else {
+          console.log(`✅ Successfully removed LinkedIn content for: ${articleId}`);
+        }
+      }
+    } catch (linkedInError) {
+      // Continue even if LinkedIn content check/removal fails
+      console.warn(`⚠️ Error checking/removing LinkedIn content: ${linkedInError}`);
+    }
+    
+    // Now remove the bookmark
     const result = await removeBookmarkFromSupabase(session_id, articleId);
     
     if (result) {
@@ -337,4 +367,4 @@ export async function DELETE(request: NextRequest) {
       error: 'Failed to remove bookmark'
     }, { status: 500 });
   }
-} 
+}

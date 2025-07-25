@@ -9,7 +9,8 @@ interface User {
 }
 
 interface SearchHeaderProps {
-  onNewArticles?: () => void;
+  // Commented out to avoid unused variable warning
+  // onNewArticles?: () => void;
   onSearchComplete?: (query: string) => void;
   onShowBookmarks?: () => void;
   user?: User | null;
@@ -19,7 +20,7 @@ interface SearchHeaderProps {
 // Removed advanced search mode - only smart search available
 
 export default function SearchHeader({ 
-  onNewArticles,
+  // onNewArticles, - Removed to avoid unused variable warning
   onSearchComplete,
   onShowBookmarks,
   user,
@@ -246,4 +247,4 @@ export default function SearchHeader({
       </header>
     </div>
   );
-} 
+}

@@ -6,21 +6,23 @@
 import type { ProcessedArticle } from '@/types/article';
 
 // Check if Supabase is available
-let supabase: any = null;
+let supabase: Record<string, unknown> | null = null;
 let isSupabaseAvailable = false;
 
 try {
-  const { supabase: supabaseClient } = require('./supabase');
-  supabase = supabaseClient;
-  isSupabaseAvailable = true;
-  console.log('📊 Supabase bookmarks available');
-} catch (error) {
+  // Using dynamic import instead of require
+  import('./supabase').then(module => {
+    supabase = module.supabase;
+    isSupabaseAvailable = true;
+    console.log('📊 Supabase bookmarks available');
+  });
+} catch {
   console.log('📊 Supabase not configured, using fallback bookmarks');
   isSupabaseAvailable = false;
 }
 
 // Fallback in-memory storage when Supabase isn't available
-let fallbackBookmarks: SharedBookmark[] = [];
+const fallbackBookmarks: SharedBookmark[] = [];
 
 // Use a shared session ID for all users
 const SHARED_SESSION_ID = 'shared-team-bookmarks';
@@ -69,7 +71,7 @@ export async function addSharedBookmark(article: ProcessedArticle): Promise<{ su
       article_source: article.source
     };
 
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from('bookmarks')
       .insert([bookmarkData])
       .select()
@@ -287,7 +289,7 @@ async function ensureSharedSession(): Promise<void> {
 /**
  * Get all shared bookmarked articles with full article content
  */
-export async function getSharedBookmarkedArticles(): Promise<{ success: boolean; articles: any[]; error?: string }> {
+export async function getSharedBookmarkedArticles(): Promise<{ success: boolean; articles: Record<string, unknown>[]; error?: string }> {
   try {
     // Get all shared bookmarks
     const { data: bookmarks, error: bookmarksError } = await supabase
@@ -339,4 +341,4 @@ export async function getSharedBookmarkedArticles(): Promise<{ success: boolean;
     console.error('Error in getSharedBookmarkedArticles:', error);
     return { success: false, articles: [], error: error instanceof Error ? error.message : 'Unknown error' };
   }
-} 
+}

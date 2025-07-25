@@ -217,17 +217,24 @@ export async function POST(request: NextRequest) {
     } else {
       console.log('➕ Creating new LinkedIn content for article:', article_id);
       
+      // Use upsert to handle potential duplicate key errors
+      const contentData = {
+        session_id: session_id,
+        article_id,
+        original_title: article_title,
+        original_url: article_url || '',
+        original_source: article_source || 'Unknown',
+        linkedin_post_text: linkedin_post || linkedin_post_text || '',
+        processing_status,
+        linkedin_hashtags: linkedin_hashtags || (tags ? (typeof tags === 'string' ? JSON.parse(tags) : tags) : null)
+      };
+      
+      // Try upsert approach first
       const { data: newContent, error: insertError } = await supabase
         .from('linkedin_content')
-        .insert({
-          session_id: session_id,
-          article_id,
-          original_title: article_title,
-          original_url: article_url || '',
-          original_source: article_source || 'Unknown',
-          linkedin_post_text: linkedin_post || linkedin_post_text || '',
-          processing_status,
-          linkedin_hashtags: linkedin_hashtags || (tags ? (typeof tags === 'string' ? JSON.parse(tags) : tags) : null)
+        .upsert(contentData, { 
+          onConflict: 'session_id,article_id',
+          ignoreDuplicates: false // Update on conflict
         })
         .select()
         .single();
@@ -236,37 +243,80 @@ export async function POST(request: NextRequest) {
         console.error('❌ Error creating LinkedIn content:', insertError);
         if (insertError.code === '23505') {
           // Duplicate key constraint - return the existing content
-          console.log('🔄 Duplicate key detected during insert, retrieving existing content...');
-          const { data: existingData } = await supabase
-            .from('linkedin_content')
-            .select('*')
-            .eq('session_id', session_id)
-            .eq('article_id', article_id)
-            .single();
-          
-          // Map the fields for consistency
-          const mappedExistingData = existingData ? {
-            id: existingData.id,
-            session_id: existingData.session_id,
-            article_id: existingData.article_id,
-            article_title: existingData.original_title,
-            article_url: existingData.original_url,
-            article_source: existingData.original_source,
-            linkedin_post: existingData.linkedin_post_text,
-            processing_status: existingData.processing_status || 'pending',
-            tags: existingData.linkedin_hashtags ? JSON.stringify(existingData.linkedin_hashtags) : null,
-            summary: existingData.original_title,
-            created_at: existingData.created_at,
-            updated_at: existingData.updated_at,
-            estimated_engagement_score: existingData.estimated_engagement_score
-          } : null;
+          console.log('🔄 Duplicate key detected during upsert, retrieving existing content...');
+          try {
+            const { data: existingData } = await supabase
+              .from('linkedin_content')
+              .select('*')
+              .eq('session_id', session_id)
+              .eq('article_id', article_id)
+              .single();
+            
+            // Map the fields for consistency
+            const mappedExistingData = existingData ? {
+              id: existingData.id,
+              session_id: existingData.session_id,
+              article_id: existingData.article_id,
+              article_title: existingData.original_title,
+              article_url: existingData.original_url,
+              article_source: existingData.original_source,
+              linkedin_post: existingData.linkedin_post_text,
+              processing_status: existingData.processing_status || 'pending',
+              tags: existingData.linkedin_hashtags ? JSON.stringify(existingData.linkedin_hashtags) : null,
+              summary: existingData.original_title,
+              created_at: existingData.created_at,
+              updated_at: existingData.updated_at,
+              estimated_engagement_score: existingData.estimated_engagement_score
+            } : null;
 
-          return NextResponse.json({
-            success: true,
-            content: mappedExistingData,
-            message: 'Content already exists',
-            sessionId: session_id
-          });
+            return NextResponse.json({
+              success: true,
+              content: mappedExistingData,
+              message: 'Content already exists',
+              sessionId: session_id
+            });
+          } catch (fetchError) {
+            console.error('❌ Error fetching existing LinkedIn content:', fetchError);
+            // Try one more approach - update instead of insert
+            try {
+              const { data: updatedContent, error: updateError } = await supabase
+                .from('linkedin_content')
+                .update(contentData)
+                .eq('session_id', session_id)
+                .eq('article_id', article_id)
+                .select()
+                .single();
+                
+              if (!updateError && updatedContent) {
+                console.log('✅ Successfully updated LinkedIn content as fallback:', updatedContent.id);
+                
+                // Map the updated content for consistency
+                const mappedUpdatedContent = {
+                  id: updatedContent.id,
+                  session_id: updatedContent.session_id,
+                  article_id: updatedContent.article_id,
+                  article_title: updatedContent.original_title,
+                  article_url: updatedContent.original_url,
+                  article_source: updatedContent.original_source,
+                  linkedin_post: updatedContent.linkedin_post_text,
+                  processing_status: updatedContent.processing_status || 'pending',
+                  tags: updatedContent.linkedin_hashtags ? JSON.stringify(updatedContent.linkedin_hashtags) : null,
+                  summary: updatedContent.original_title,
+                  created_at: updatedContent.created_at,
+                  updated_at: updatedContent.updated_at,
+                  estimated_engagement_score: updatedContent.estimated_engagement_score
+                };
+                
+                return NextResponse.json({
+                  success: true,
+                  content: mappedUpdatedContent,
+                  sessionId: session_id
+                });
+              }
+            } catch (updateFallbackError) {
+              console.error('❌ All approaches failed for LinkedIn content:', updateFallbackError);
+            }
+          }
         }
         throw insertError;
       }
@@ -304,4 +354,57 @@ export async function POST(request: NextRequest) {
       error: 'Internal server error'
     }, { status: 500 });
   }
-} 
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const session = await getCurrentSession(request);
+    
+    if (!session || typeof (session as any).session_id !== 'string') {
+      return NextResponse.json({
+        success: false,
+        error: 'Session object missing session_id'
+      }, { status: 401 });
+    }
+    const session_id = (session as { session_id: string }).session_id;
+    
+    const { searchParams } = new URL(request.url);
+    const articleId = searchParams.get('articleId');
+    
+    if (!articleId) {
+      return NextResponse.json({
+        success: false,
+        error: 'Article ID is required'
+      }, { status: 400 });
+    }
+
+    console.log(`🗑️ Deleting LinkedIn content: session=${session_id}, articleId=${articleId}`);
+    
+    const { error } = await supabase
+      .from('linkedin_content')
+      .delete()
+      .eq('session_id', session_id)
+      .eq('article_id', articleId);
+
+    if (error) {
+      console.error('❌ Error deleting LinkedIn content:', error);
+      return NextResponse.json({
+        success: false,
+        error: 'Failed to delete LinkedIn content'
+      }, { status: 500 });
+    }
+
+    console.log(`✅ Successfully deleted LinkedIn content for: ${articleId}`);
+    return NextResponse.json({
+      success: true,
+      message: 'LinkedIn content deleted successfully'
+    });
+    
+  } catch (error) {
+    console.error('❌ Error in LinkedIn API DELETE:', error);
+    return NextResponse.json({
+      success: false,
+      error: 'Internal server error'
+    }, { status: 500 });
+  }
+}

@@ -193,7 +193,8 @@ export async function getCurrentUser(request: NextRequest): Promise<{ user?: Aut
 /**
  * Ensure user session exists in our sessions table for bookmarks foreign key
  */
-async function ensureUserSession(userId: string, email: string): Promise<void> {
+// Ensure user session exists in Supabase
+async function ensureUserSession(userId: string): Promise<void> {
   try {
     const sessionId = `user-${userId}`;
     
@@ -266,4 +267,4 @@ export async function refreshSession(refreshToken: string): Promise<{ success: b
     console.error('❌ Refresh session error:', error);
     return { success: false, error: 'Failed to refresh session' };
   }
-} 
+}

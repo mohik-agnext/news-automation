@@ -162,7 +162,7 @@ export class RedisCache {
   /**
    * Set value in cache with TTL
    */
-  static async set(key: string, value: any, ttlSeconds: number = 300): Promise<boolean> {
+  static async set(key: string, value: unknown, ttlSeconds: number = 300): Promise<boolean> {
     const client = await getRedisClient();
     if (!client) return false;
 
@@ -320,4 +320,4 @@ export const CacheKeys = {
 // Initialize Redis on module load
 initializeRedis().catch(console.error);
 
-export default RedisCache; 
+export default RedisCache;

@@ -1,6 +1,6 @@
-import { Article, WebhookPayload } from '@/types/article';
+import { Article } from '@/types/article';
 
-export function validateArticle(data: any): data is Article {
+export function validateArticle(data: unknown): data is Article {
   return (
     data &&
     typeof data.source === 'string' &&
@@ -26,7 +26,7 @@ export function validateArticle(data: any): data is Article {
   );
 }
 
-export function processWebhookPayload(payload: any): Article[] {
+export function processWebhookPayload(payload: unknown): Article[] {
   if (!Array.isArray(payload)) {
     throw new Error('Expected array of articles');
   }
@@ -64,4 +64,4 @@ export function generateArticleId(article: Article): string {
   // Create a unique ID based on article content
   const identifier = `${article.source}-${article.title}-${article.publishedAt}`;
   return Buffer.from(identifier).toString('base64url');
-} 
+}

@@ -16,13 +16,13 @@ try {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   isSupabaseAvailable = !!(supabaseUrl && supabaseUrl !== 'https://your-project-id.supabase.co');
   console.log('📊 Supabase availability:', isSupabaseAvailable ? 'Available' : 'Not configured');
-} catch (error) {
+} catch {  // Ignore error details
   console.log('📊 Supabase check failed, using fallback');
   isSupabaseAvailable = false;
 }
 
 // Fallback storage when Supabase isn't available
-let fallbackBookmarks: EnhancedBookmark[] = [];
+const fallbackBookmarks: EnhancedBookmark[] = [];
 
 export interface EnhancedBookmark {
   id: string;
@@ -99,7 +99,7 @@ export async function addEnhancedBookmark(
       webhook_processed: false
     };
 
-    const { data, error } = await supabase
+    const { data: insertedData, error } = await supabase
       .from('bookmarks')
       .insert([bookmarkData])
       .select()
@@ -115,19 +115,25 @@ export async function addEnhancedBookmark(
           .eq('article_id', article.url)
           .single();
         
+        // Check if we need to trigger LinkedIn content generation for existing bookmark
+        if (existing && (!existing.webhook_processed || existing.processing_status === 'pending')) {
+          // Trigger webhook for data enrichment even for existing bookmarks
+          triggerBookmarkWebhook(sessionId, [existing]);
+        }
+        
         return { success: true, bookmark: existing };
       }
       return { success: false, error: error.message };
     }
 
     const bookmark: EnhancedBookmark = {
-      id: data.id,
-      session_id: data.session_id,
-      article_id: data.article_id,
-      article_url: data.article_url,
-      article_title: data.article_title,
-      article_source: data.article_source,
-      created_at: data.created_at,
+      id: insertedData.id,
+      session_id: insertedData.session_id,
+      article_id: insertedData.article_id,
+      article_url: insertedData.article_url,
+      article_title: insertedData.article_title,
+      article_source: insertedData.article_source,
+      created_at: insertedData.created_at,
       processing_status: 'pending',
       webhook_processed: false
     };
@@ -281,7 +287,7 @@ export async function updateBookmarkWithEnrichedData(
       return { success: true };
     }
 
-    const updateData: any = {
+    const updateData: Record<string, unknown> = {
       ...enrichedData,
       webhook_processed: true,
       tags: enrichedData.tags ? JSON.stringify(enrichedData.tags) : null,
@@ -487,4 +493,4 @@ export async function getBookmarkAnalytics(sessionId: string): Promise<{
       recentActivity: []
     };
   }
-} 
+}

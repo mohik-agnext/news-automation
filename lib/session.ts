@@ -26,7 +26,7 @@ export async function getCurrentSession(request: NextRequest) {
   
   try {
     // Try to get session from cache first
-    const sessionCacheKey = CacheKeys.session('temp-lookup');
+    // const sessionCacheKey = CacheKeys.session('temp-lookup');
     
     const authResult = await getCurrentUser(request);
     
@@ -97,4 +97,4 @@ export async function clearSessionCache(sessionId: string): Promise<void> {
   } catch (error) {
     console.error('Error clearing session cache:', error);
   }
-} 
+}

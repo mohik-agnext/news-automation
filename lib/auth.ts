@@ -17,7 +17,7 @@ const SESSIONS_FILE = path.join(DATA_DIR, 'sessions.json');
 async function ensureDataDir() {
   try {
     await fs.mkdir(DATA_DIR, { recursive: true });
-  } catch (error) {
+  } catch {
     // Directory already exists, ignore
   }
 }
@@ -38,7 +38,7 @@ async function loadUsers(): Promise<User[]> {
     await ensureDataDir();
     const data = await fs.readFile(USERS_FILE, 'utf-8');
     return JSON.parse(data);
-  } catch (error) {
+  } catch {
     return [];
   }
 }
@@ -55,7 +55,7 @@ async function loadSessions(): Promise<UserSession[]> {
     await ensureDataDir();
     const data = await fs.readFile(SESSIONS_FILE, 'utf-8');
     return JSON.parse(data);
-  } catch (error) {
+  } catch {
     return [];
   }
 }
@@ -75,7 +75,7 @@ export async function authenticateUser(credentials: UserCredentials): Promise<Au
     const passwordHash = hashPassword(credentials.password);
     
     // Find existing user
-    let user = users.find(u => u.username === credentials.username);
+    const user = users.find(u => u.username === credentials.username);
     
     if (user) {
       // Existing user - check password
@@ -217,5 +217,6 @@ export async function logoutUser(sessionId: string): Promise<void> {
  */
 export async function getAllUsers(): Promise<Omit<User, 'passwordHash'>[]> {
   const users = await loadUsers();
-  return users.map(({ passwordHash, ...user }) => user);
-} 
+  // Omit passwordHash from each user
+  return users.map(({ passwordHash: _unused, ...user }) => user);
+}

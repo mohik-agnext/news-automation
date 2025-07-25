@@ -103,13 +103,64 @@ export function useLinkedInContent() {
     setError(null);
   }, []);
 
+  const deleteLinkedInContent = useCallback(async (articleId: string) => {
+    try {
+      console.log(`🗑️ Deleting LinkedIn content for article: ${articleId}`);
+      setLoading(prev => new Set(prev).add(articleId));
+      setError(null);
+
+      const params = new URLSearchParams({ articleId });
+      const url = `/api/linkedin?${params.toString()}`;
+
+      const response = await fetch(url, {
+        method: 'DELETE',
+        credentials: 'include' // Include authentication cookies
+      });
+      
+      if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error('Authentication required');
+        }
+        throw new Error(`HTTP ${response.status}: Failed to delete LinkedIn content`);
+      }
+
+      const data = await response.json();
+      console.log('📊 API Response:', data);
+      
+      if (data.success) {
+        console.log(`✅ Successfully deleted LinkedIn content for article: ${articleId}`);
+        setLinkedInContent(prev => {
+          const newMap = new Map(prev);
+          newMap.delete(articleId);
+          return newMap;
+        });
+        return true;
+      } else {
+        console.log('❌ Failed to delete LinkedIn content');
+        return false;
+      }
+
+    } catch (error) {
+      console.error('❌ Error deleting LinkedIn content:', error);
+      setError(error instanceof Error ? error.message : 'Unknown error');
+      return false;
+    } finally {
+      setLoading(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(articleId);
+        return newSet;
+      });
+    }
+  }, []);
+
   return {
     fetchLinkedInContent,
     getLinkedInContent,
     isLoading,
     hasLinkedInContent,
     clearLinkedInContent,
+    deleteLinkedInContent,
     error,
     allLinkedInContent: linkedInContent
   };
-} 
+}

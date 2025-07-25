@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 
 interface RealtimeIndicatorProps {
   isConnected: boolean;
@@ -188,4 +188,4 @@ export default function RealtimeIndicator({
       )}
     </div>
   );
-} 
+}
